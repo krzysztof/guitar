@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<body>
+</br>
+<div style="text-align: center;">
+<span id="display" style="font-size: 120px;font-weight: 600;">6th: A > </span>
+</br>
+<span id="timer" style="color: red; font-size: 30px;">0</span>
+</div>
+</br>
+
+<textarea id="choices" rows="10" cols="8">
+3rd: A# <
+3rd: B <
+3rd: C <
+3rd: C# <
+3rd: D <
+3rd: D# <
+3rd: E <
+3rd: F <
+3rd: F# <
+3rd: G >
+3rd: G# >
+3rd: A >
+3rd: A# >
+3rd: B >
+3rd: C >
+3rd: C# >
+3rd: D >
+3rd: D# >
+3rd: E >
+3rd: F >
+3rd: F# >
+</textarea>
+
+<!--
+<textarea id="choices" rows="10" cols="8">
+
+4th: D >
+4th: D# >
+4th: E >
+4th: F >
+4th: F# >
+4th: G >
+4th: G# >
+4th: A >
+4th: A# >
+4th: B >
+4th: C >
+4th: C# >
+4th: F <
+4th: F# <
+4th: G <
+4th: G# <
+4th: A <
+4th: A# <
+4th: B <
+4th: C <
+4th: C# <
+4th: D <
+
+
+6th: E >
+6th: F >
+6th: F# >
+6th: G >
+6th: G# >
+6th: A >
+6th: A# >
+6th: B >
+6th: C >
+6th: D >
+6th: D# >
+6th: G# <
+6th: A <
+6th: A# <
+6th: B <
+6th: C <
+6th: D <
+6th: D# <
+6th: E <
+5th: A >
+5th: A# >
+5th: B >
+5th: C >
+5th: C# >
+5th: D >
+5th: D# >
+5th: E >
+5th: F >
+5th: F# >
+5th: G >
+5th: G# >
+5th: C <
+5th: C# <
+5th: D <
+5th: D# <
+5th: E <
+5th: F <
+5th: F# <
+5th: G <
+5th: G# <
+5th: A <
+</textarea>
+-->
+<p>Delay <input id="delay_sec" type="text" value="5"></input> seconds</p>
+
+<button type="button" onclick="myFunction()">Try it</button>
+
+<script>
+Array.prototype.sample = function(){
+  return this[Math.floor(Math.random() * this.length)];
+}
+
+var millis_update = Date.now() - 60 * 1000;
+var last_item = "";
+
+function getAvailableItems() {
+  //return document.getElementById("choices").value.split('\n').filter((word) => word.trim());
+  return "ABCDEFG";
+}
+
+function sampleNewItem() {
+  //return getAvailableItems().sample();
+  return "34".split("").sample() + ": " + "ABCDEFG".split("").sample();
+}
+
+function myFunction() {
+  var sec_wait = parseInt(
+    document.getElementById("delay_sec").value);
+  var millis_now = Date.now();
+  var millis_left = sec_wait * 1000 - (millis_now - millis_update);
+  var sec_left = Math.ceil(millis_left / 1000);
+
+  if (millis_left > 0) {
+    document.getElementById("timer").innerHTML = sec_left;
+    return;
+  }
+  millis_update = millis_now;
+  new_item = sampleNewItem();
+
+  if (getAvailableItems().length > 1) {
+    while(last_item == new_item) {
+      new_item = sampleNewItem();
+    }
+  }
+  last_item = new_item;
+
+  var side = [">", "<"].sample();
+  //var display_item = new_item + " " + side
+  var display_item = new_item
+  document.getElementById("display").innerHTML = display_item;
+}
+myFunction()
+setInterval(myFunction, 200);
+</script>
+
+</body>
+</html> 

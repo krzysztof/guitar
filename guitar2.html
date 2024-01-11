@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html>
+<body>
+</br>
+<div style="text-align: center;">
+<span id="display_prev" style="font-size: 90px;font-weight: 200; color:gray; padding-right:10px"></span>
+<span id="display_ans" style="font-size: 50px;font-weight: 200; color:gray; padding-right:40px"></span>
+
+<span id="display" style="font-size: 120px;font-weight: 600;"></span>
+<span id="display_direction" style="font-size: 90px; font-weight: 600"></span>
+</br>
+<span id="timer" style="color: red; font-size: 30px;">0</span>
+</div>
+</br>
+
+<p>Choice <input id="choice_string" type="text" value="5n4n"></input> e.g.: "6a5s4n" -> 6 all, 5 sharps, 4 all</p>
+<textarea id="fixed_choices" rows="4" cols="3"></textarea>
+
+<p>Delay <input id="delay_sec" type="text" value="5.5"></input> seconds</p>
+
+<table border="1">
+  <tr>
+    <td>←</td>
+    <td>→</td>
+    <td>↑</td>
+    <td>↓</td> 
+    <td>↖</td>
+    <td>↗</td>
+    <td>↙</td>
+    <td>↘</td>
+  </tr>
+  <tr>
+    <td><input type="checkbox" id="dir_w"></td>
+    <td><input type="checkbox" id="dir_e"></td>
+    <td><input type="checkbox" id="dir_n"></td>
+    <td><input type="checkbox" id="dir_s"></td>
+    <td><input type="checkbox" id="dir_nw"></td>
+    <td><input type="checkbox" id="dir_ne"></td>
+    <td><input type="checkbox" id="dir_sw"></td>
+    <td><input type="checkbox" id="dir_se"></td>
+  </tr>
+</table>
+
+
+<button type="button" onclick="myFunction()">Try it</button>
+
+<script>
+Array.prototype.sample = function(){
+  return this[Math.floor(Math.random() * this.length)];
+}
+
+// Warn if overriding existing method
+if(Array.prototype.equals)
+    console.warn("Overriding existing Array.prototype.equals. Possible causes: New API defines the method, there's a framework conflict or you've got double inclusions in your code.");
+// attach the .equals method to Array's prototype to call it on any array
+Array.prototype.equals = function (array) {
+    // if the other array is a falsy value, return
+    if (!array)
+        return false;
+    // if the argument is the same array, we can be sure the contents are same as well
+    if(array === this)
+        return true;
+    // compare lengths - can save a lot of time 
+    if (this.length != array.length)
+        return false;
+
+    for (var i = 0, l=this.length; i < l; i++) {
+        // Check if we have nested arrays
+        if (this[i] instanceof Array && array[i] instanceof Array) {
+            // recurse into the nested arrays
+            if (!this[i].equals(array[i]))
+                return false;       
+        }           
+        else if (this[i] != array[i]) { 
+            // Warning - two different object instances will never be equal: {x:20} != {x:20}
+            return false;   
+        }           
+    }       
+    return true;
+}
+
+String.prototype.equals = function (other_string) {
+  return this == other_string;
+}
+// Hide method from for-in loops
+Object.defineProperty(Array.prototype, "equals", {enumerable: false});
+
+var millis_update = Date.now() - 60 * 1000;
+var last_item = ["6", "E"];
+
+const cartesian = (...a) => a.reduce((a, b) => a.flatMap(d => b.map(e => [d, e].flat())));
+const dir_dict = {
+    "dir_w": "←",
+    "dir_e": "→",
+    "dir_n": "↑",
+    "dir_s": "↓",
+    "dir_nw": "↖",
+    "dir_ne": "↗",
+    "dir_sw": "↙",
+    "dir_se": "↘"
+};
+    
+
+function getAvailableItems() {
+  var strings = "123456".split("");
+  var notes = ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"];
+
+  return cartesian(strings, notes).map((item) => item[0] + ": " + item[1]);
+}
+function computeAnswer(item) {
+  string_number = parseInt(item[0]); 
+  const all_notes = ["A", "A#", "B", "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#"];
+  note = item[1];
+  zero_fret = [-1, 7, 2, 10, 5, 0, 7]
+  index_note = all_notes.findIndex(n => note == n) - zero_fret[string_number];
+  if (index_note < 0) 
+    index_note += 12;
+  if (index_note == 0)
+    index_note = "0,12";
+  return index_note;
+}
+
+function getDirection() {
+  var arrows = [];
+  for (var key in dir_dict) {
+    if (document.getElementById(key).checked)
+      arrows.push(dir_dict[key]);
+  }
+  if (arrows.length == 0) { return ""; }
+  return arrows.sample();
+}
+
+function getAvailableItemsChoiceString(choice_string) {
+
+  var fixed_choices = document.getElementById("fixed_choices").value.split('\n').filter((word) => word.trim());
+  if (fixed_choices.length > 0) {
+    return fixed_choices;
+  }
+
+  const cs = document.getElementById("choice_string").value.trim();
+
+  var naturals = ["A", "B", "C", "D", "E", "F", "G"];
+  var sharps = ["A#", "C#", "D#", "F#", "G#"];
+
+  var total_items = [];
+  for (let i = 0; i < cs.length / 2 ; ++i) {
+    let string_number = cs[i * 2];
+    let variant = cs[i * 2 + 1];
+    new_items = [];
+    let notes = [];
+    if (variant == "n")
+      notes = naturals;
+    if (variant == "s")
+      notes = sharps;
+    if (variant == "a")
+      notes = naturals.concat(sharps);
+    new_items = cartesian([string_number], notes);
+    //new_items = [string_number].concat(notes);
+    total_items = total_items.concat(new_items);
+  }
+  return total_items;
+  // .split('\n').filter((word) => word.trim());
+}
+
+function sampleItem() {
+  var available_items = getAvailableItemsChoiceString();
+  var new_item = available_items.sample();
+  //return new_item[0] + ": " + new_item[1];
+  return new_item;
+}
+
+function sampleNonRepeatedItem() {
+  //return getAvailableItems().sample();
+  var available_items = getAvailableItemsChoiceString();
+  var new_item = sampleItem();
+
+  var max_retries = 100;
+  if (available_items.length > 1) {
+    while(last_item.equals(new_item) && (max_retries > 0)) {
+      new_item = sampleItem();
+      max_retries--;
+    }
+  }
+  return new_item;
+}
+
+function formatItem(item) {
+  if (item) {
+    return item[0] + ": " + item[1];
+  }
+  return "";
+}
+
+function myFunction() {
+  var millis_wait = parseFloat(document.getElementById("delay_sec").value) * 1000;
+  var millis_now = Date.now();
+  var millis_left = millis_wait - (millis_now - millis_update);
+  var sec_left = (millis_left / 1000).toFixed(1);
+
+  if (millis_left > 0) {
+    document.getElementById("timer").innerHTML = sec_left;
+    return;
+  }
+  millis_update = millis_now;
+  new_item = sampleNonRepeatedItem();
+
+
+  document.getElementById("display_prev").innerHTML = formatItem(last_item);
+  document.getElementById("display_ans").innerHTML = "(" + computeAnswer(last_item) + ")";
+
+  last_item = new_item;
+
+  formatted_new_item = formatItem(new_item);
+
+  document.getElementById("display").innerHTML = formatted_new_item;
+  document.getElementById("display_direction").innerHTML = getDirection();
+}
+myFunction()
+setInterval(myFunction, 100);
+</script>
+
+</body>
+</html> 
